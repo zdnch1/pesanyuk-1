@@ -46,28 +46,19 @@ export default function Header() {
           <Link href="/katalog" className="px-3 py-2 text-sm font-medium rounded-md hover:bg-accent">
             Katalog
           </Link>
-          <Link href="/tim" className="px-3 py-2 text-sm font-medium rounded-md hover:bg-accent">
-            Tim Kami
-          </Link>
-          <Link href="/kontak" className="px-3 py-2 text-sm font-medium rounded-md hover:bg-accent">
-            Kontak
+          <Link href="/tentang" className="px-3 py-2 text-sm font-medium rounded-md hover:bg-accent">
+            Tentang Kami
           </Link>
         </nav>
 
         <div className="hidden md:flex items-center space-x-4">
           <ModeToggle />
-          <Button variant="outline" size="icon">
-            <ShoppingCart className="h-5 w-5" />
-          </Button>
           <Button>Pesan Sekarang</Button>
         </div>
 
         {/* Mobile Menu Button */}
         <div className="flex items-center md:hidden gap-2">
           <ModeToggle />
-          <Button variant="outline" size="icon">
-            <ShoppingCart className="h-5 w-5" />
-          </Button>
           <Button 
             variant="ghost" 
             size="icon" 
@@ -103,20 +94,12 @@ export default function Header() {
               <span>Katalog</span>
             </Link>
             <Link 
-              href="/tim" 
+              href="/tentang" 
               className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-accent"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               <Users className="h-4 w-4" />
-              <span>Tim Kami</span>
-            </Link>
-            <Link 
-              href="/kontak" 
-              className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-accent"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <Phone className="h-4 w-4" />
-              <span>Kontak</span>
+              <span>Tentang Kami</span>
             </Link>
             <Button 
               className="w-full mt-2"

@@ -1,31 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Star, Search, Plus, Filter, SlidersHorizontal } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Star, Search, Plus, Filter, SlidersHorizontal, ShoppingCart, Minus, Trash2 } from "lucide-react";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { toast } from "sonner";
 
 // Dummy data for products
 const products = [
@@ -142,16 +130,24 @@ const restaurants = [
   { id: "martabak-nikmat", name: "Martabak Nikmat" },
 ];
 
+// Cart type definitions
+interface CartItem {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
 export default function ProductCatalog() {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedRestaurants, setSelectedRestaurants] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState("popularity");
   const [filteredProducts, setFilteredProducts] = useState(products);
   const [isLoading, setIsLoading] = useState(true);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   // Initialize filters from URL params
   useEffect(() => {
@@ -211,14 +207,39 @@ export default function ProductCatalog() {
     setFilteredProducts(result);
   }, [searchQuery, selectedCategory, selectedRestaurants, sortBy]);
 
-  const toggleRestaurant = (restaurantName: string) => {
-    setSelectedRestaurants((prev) => {
-      if (prev.includes(restaurantName)) {
-        return prev.filter((r) => r !== restaurantName);
-      } else {
-        return [...prev, restaurantName];
+  // Cart functions
+  const addToCart = (product: typeof products[0]) => {
+    setCart(prevCart => {
+      const existingItem = prevCart.find(item => item.id === product.id);
+      if (existingItem) {
+        return prevCart.map(item =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
       }
+      return [...prevCart, { id: product.id, name: product.name, price: product.price, quantity: 1 }];
     });
+    toast.success("Produk ditambahkan ke keranjang");
+  };
+
+  const updateQuantity = (id: number, change: number) => {
+    setCart(prevCart =>
+      prevCart.map(item =>
+        item.id === id
+          ? { ...item, quantity: Math.max(0, item.quantity + change) }
+          : item
+      ).filter(item => item.quantity > 0)
+    );
+  };
+
+  const removeFromCart = (id: number) => {
+    setCart(prevCart => prevCart.filter(item => item.id !== id));
+    toast.success("Produk dihapus dari keranjang");
+  };
+
+  const getTotalPrice = () => {
+    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
 
   const formatPrice = (price: number) => {
@@ -228,6 +249,24 @@ export default function ProductCatalog() {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(price);
+  };
+
+  const handleCheckout = () => {
+    const message = `Halo, saya ingin memesan:%0A%0A${cart
+      .map(item => `${item.name} (${item.quantity}x) - ${formatPrice(item.price * item.quantity)}`)
+      .join('%0A')}%0A%0ATotal: ${formatPrice(getTotalPrice())}%0A%0ATerima kasih!`;
+    
+    window.open(`https://wa.me/6289519128492?text=${message}`, '_blank');
+  };
+
+  const toggleRestaurant = (restaurantName: string) => {
+    setSelectedRestaurants((prev) => {
+      if (prev.includes(restaurantName)) {
+        return prev.filter((r) => r !== restaurantName);
+      } else {
+        return [...prev, restaurantName];
+      }
+    });
   };
 
   const resetFilters = () => {
@@ -313,7 +352,6 @@ export default function ProductCatalog() {
 
         {/* Main Content */}
         <div className="flex-1">
-          {/* Search and Sort */}
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between mb-8">
             <div className="relative w-full md:w-96">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -326,6 +364,93 @@ export default function ProductCatalog() {
             </div>
             
             <div className="flex items-center gap-4 w-full md:w-auto">
+              <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm" className="relative">
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Keranjang
+                    {cart.length > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center">
+                        {cart.length}
+                      </span>
+                    )}
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-full sm:w-[400px]">
+                  <SheetHeader>
+                    <SheetTitle>Keranjang Belanja</SheetTitle>
+                    <SheetDescription>
+                      {cart.length === 0 ? "Keranjang belanja Anda kosong" : `${cart.length} item dalam keranjang`}
+                    </SheetDescription>
+                  </SheetHeader>
+                  
+                  <div className="mt-8 space-y-6">
+                    <AnimatePresence>
+                      {cart.map((item) => (
+                        <motion.div
+                          key={item.id}
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="flex items-center justify-between gap-4 pb-4 border-b"
+                        >
+                          <div>
+                            <h4 className="font-medium">{item.name}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {formatPrice(item.price)} x {item.quantity}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => updateQuantity(item.id, -1)}
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <span className="w-8 text-center">{item.quantity}</span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => updateQuantity(item.id, 1)}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => removeFromCart(item.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+
+                    {cart.length > 0 && (
+                      <div className="space-y-4">
+                        <Separator />
+                        <div className="flex justify-between text-lg font-bold">
+                          <span>Total</span>
+                          <span>{formatPrice(getTotalPrice())}</span>
+                        </div>
+                        <Button
+                          className="w-full"
+                          size="lg"
+                          onClick={handleCheckout}
+                        >
+                          Pesan via WhatsApp
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </SheetContent>
+              </Sheet>
+
               {/* Mobile Filter Button */}
               <Sheet>
                 <SheetTrigger asChild>
@@ -498,7 +623,11 @@ export default function ProductCatalog() {
                         </CardContent>
                         <CardFooter className="flex justify-between items-center">
                           <span className="font-bold">{formatPrice(product.price)}</span>
-                          <Button size="sm" variant="default">
+                          <Button
+                            size="sm"
+                            variant="default"
+                            onClick={() => addToCart(product)}
+                          >
                             <Plus className="h-4 w-4 mr-1" /> Tambah
                           </Button>
                         </CardFooter>
