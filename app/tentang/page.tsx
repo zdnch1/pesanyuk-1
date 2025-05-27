@@ -12,9 +12,9 @@ export const metadata: Metadata = {
 
 export default function TentangPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center pt-24">
+    <div className="w-full pt-24">
       <div className="w-full py-8 bg-muted/30">
-        <div className="container">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col space-y-2">
             <h1 className="text-3xl font-bold">Tentang Kami</h1>
             <div className="flex items-center text-sm text-muted-foreground">
@@ -28,7 +28,7 @@ export default function TentangPage() {
         </div>
       </div>
 
-      <div className="container py-16">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-24">
           <div className="space-y-6">
             <h2 className="text-3xl font-bold">Menghadirkan Pengalaman Kuliner Terbaik ke Rumah Anda</h2>
@@ -130,6 +130,6 @@ export default function TentangPage() {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
